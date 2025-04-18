@@ -128,11 +128,12 @@ def build_value_vocab(user_inputs, min_freq=1):
 datasets = [  # 使用 "datasets" 這個變數名稱
     "userPrompt: Hi; Response: 您好，有什麼可以幫忙？;",
     "userPrompt: How to reset password?; Response: 請到設定頁面重設密碼。;",
-    "userPrompt: What is your name?; Response: 我是客服機器人。;",
-    "userPrompt: 你是誰; Response: 我是DeepFun 客服模組。;"  # 添加了 "你是誰" 的對話
+    "userPrompt: What is your name?; Response: 我是deepFun 客服模型。;",
+    "userPrompt: 你是誰; Response: 我是deepFun 客服模型。;",
+    "userPrompt: Your name; Response: 我是deepFun 客服模型。;" 
 ]
 
-userInput = "userPrompt: 你是誰"  # 單一的 user_input 字串
+userInput = "userPrompt: What is your name?;"  # 單一的 user_input 字串
 
 # 建立 value_vocab (使用 datasets)
 VALUE_VOCAB = build_value_vocab(datasets)  # 使用 datasets 來建立 value_vocab，並更新全域變數
@@ -153,7 +154,7 @@ import torch.optim as optim
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()  # 交叉熵損失函數，適用於分類問題
 
-num_epochs = 20  # 訓練週期數
+num_epochs = 100  # 訓練週期數
 loss = 0.0 # 初始化 loss
 for epoch in range(num_epochs):
     for batch in train_dataloader:
@@ -176,13 +177,15 @@ for epoch in range(num_epochs):
         loss.backward()
         optimizer.step()
 
-    print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}")
+    print(f"Epoch {epoch+1}/{num_epochs}, Loss type: {type(loss)}") # 檢查 loss 的類型
+    if isinstance(loss, torch.Tensor):
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss.item():.4f}")
+    else:
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {loss:.4f}")
 
 
 # 使用訓練好的模型來處理 userInput
-
-# 1. 將 userInput 轉換成模型可以理解的格式 (feature_ids, value_ids)
-def prepare_input(user_input, feature_vocab, value_vocab):
+def prepare_input(user_input, feature_vocab, value_vocab, max_len=10):  # 添加 max_len 参数
     feature_value_pairs = user_input.split(';')
     feature_ids = []
     value_ids = []
@@ -214,19 +217,35 @@ def prepare_input(user_input, feature_vocab, value_vocab):
             print(f"Error processing pair: {pair}. Skipping. Error: {e}")
             continue
 
+    # 填充或截斷 feature_ids
+    if len(feature_ids) < max_len:
+        feature_ids += [FEATURE_VOCAB["<PAD>"]] * (max_len - len(feature_ids))
+    else:
+        feature_ids = feature_ids[:max_len]
+
+    # 填充或截斷 value_ids
+    if len(value_ids) < max_len:
+        value_ids += [VALUE_VOCAB["<PAD>"]] * (max_len - len(value_ids))
+    else:
+        value_ids = value_ids[:max_len]
+
     feature_ids = torch.tensor(feature_ids)
     value_ids = torch.tensor(value_ids)
 
     return feature_ids, value_ids
 
-user_feature_ids, user_value_ids = prepare_input(userInput, FEATURE_VOCAB, VALUE_VOCAB)
+
+# 1. 將 userInput 轉換成模型可以理解的格式 (feature_ids, value_ids)
+user_feature_ids, user_value_ids = prepare_input(userInput, FEATURE_VOCAB, VALUE_VOCAB, max_len=10) # 指定 max_len
 
 # 2. 將輸入傳遞給模型
 model.eval()  # 設定為評估模式
+"""
 with torch.no_grad():  # 停用梯度計算，以加快速度
     #output = model(user_feature_ids, user_value_ids)
     output = model(user_feature_ids.unsqueeze(0), user_value_ids.unsqueeze(0))
-
+"""
+output = model(user_feature_ids.unsqueeze(0), user_value_ids.unsqueeze(0))
 # 3. 處理模型的輸出 (生成回應)
 # 將輸出轉換為機率分佈
 probabilities = torch.softmax(output, dim=2)
