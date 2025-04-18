@@ -128,11 +128,13 @@ def build_value_vocab(user_inputs, min_freq=1):
 datasets = [  # 使用 "datasets" 這個變數名稱
     "userPrompt: Hi; Response: 您好，有什麼可以幫忙？;",
     "userPrompt: How to reset password?; Response: 請到設定頁面重設密碼。;",
-    "userPrompt: What is your name?; Response: 我是客服機器人。;",
-    "userPrompt: 你是誰; Response: 我是deepFun 客服模型。;"  # 添加了 "你是誰" 的對話
+    "userPrompt: What is your name?; Response: 我是deepFun 客服模型。;",
+    "userPrompt: 你是誰; Response: 我是deepFun 客服模型。;",
+    "userPrompt: Your name; Response: 我是deepFun 客服模型。;",
+    "userPrompt: 查詢訂單; Response: 很高興為閣下服務，請輸入訂單號碼。;"
 ]
 
-userInput = "userPrompt: your name?"  # 單一的 user_input 字串
+userInput = "userPrompt: What is your name?;"  # 單一的 user_input 字串
 
 # 建立 value_vocab (使用 datasets)
 VALUE_VOCAB = build_value_vocab(datasets)  # 使用 datasets 來建立 value_vocab，並更新全域變數
@@ -144,7 +146,7 @@ train_dataset = ChatDataset(datasets, FEATURE_VOCAB, VALUE_VOCAB)  # 使用 data
 train_dataloader = DataLoader(train_dataset, batch_size=10, shuffle=True, drop_last=True)  # 可以調整 batch_size, 加入 drop_last=True
 
 # 建立模型
-model = ChatModel(feature_vocab_size=len(FEATURE_VOCAB), value_vocab_size=len(VALUE_VOCAB), embedding_dim=64, hidden_dim=128)
+model = ChatModel(feature_vocab_size=len(FEATURE_VOCAB), value_vocab_size=len(VALUE_VOCAB), embedding_dim=64, hidden_dim=384)
 
 # 訓練模型
 # 訓練迴圈 (簡化版)
@@ -153,7 +155,7 @@ import torch.optim as optim
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()  # 交叉熵損失函數，適用於分類問題
 
-num_epochs = 10  # 訓練週期數
+num_epochs = 100  # 訓練週期數
 loss = 0.0 # 初始化 loss
 for epoch in range(num_epochs):
     for batch in train_dataloader:
@@ -239,10 +241,12 @@ user_feature_ids, user_value_ids = prepare_input(userInput, FEATURE_VOCAB, VALUE
 
 # 2. 將輸入傳遞給模型
 model.eval()  # 設定為評估模式
+"""
 with torch.no_grad():  # 停用梯度計算，以加快速度
     #output = model(user_feature_ids, user_value_ids)
     output = model(user_feature_ids.unsqueeze(0), user_value_ids.unsqueeze(0))
-
+"""
+output = model(user_feature_ids.unsqueeze(0), user_value_ids.unsqueeze(0))
 # 3. 處理模型的輸出 (生成回應)
 # 將輸出轉換為機率分佈
 probabilities = torch.softmax(output, dim=2)
