@@ -28,8 +28,8 @@ class cakeProduceMachine(Module):
 datasets = torch.tensor([[100, 80], [150, 67], [90, 30], [120,45]], dtype=torch.float32)
 labels = torch.tensor([[1],[1],[0],[0]], dtype=torch.float32)
 
-user_flour = 370.8
-user_milk = 70.8
+user_flour = 100
+user_milk = 80
 user_label = 0
 if user_flour > 200.2 and user_milk >= 56.0: user_label = 0
 elif user_flour <= 40.0 and user_milk <= 12.3: user_label = 0
@@ -59,4 +59,4 @@ with torch.no_grad():
   if prediction.item() > 0.5: result = "成功做到蛋糕"
   elif prediction.item() == 0.5: result = "蛋糕做出來一般般"
   else: result = "蛋糕不好吃"
-print(f"結果是： {result}, 概率是: {prediction.item()*100:.1f }%")
+print(f"結果是： {result}, 概率是: {prediction.item()*100 }%")
