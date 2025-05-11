@@ -51,8 +51,12 @@ for trainingTime in range(100):
     #每10次訓練判斷
     if trainingTime % 10 == 0:
         print(f"Epoch: {trainingTime}, Loss: {loss.item():.4f}")
-result = ""
-if user_except_result.item() > 0.5: result = "成功做到蛋糕"
-elif user_except_result.item() == 0.5: result = "蛋糕做出來一般般"
-else: result = "蛋糕不好吃"
-print(f"結果是： {result}, 概率是: {user_except_result.item()*100 }%")
+
+# Predict model
+with torch.no_grad():
+  result = ""
+  prediction = model(user_input)
+  if prediction.item() > 0.5: result = "成功做到蛋糕"
+  elif prediction.item() == 0.5: result = "蛋糕做出來一般般"
+  else: result = "蛋糕不好吃"
+print(f"結果是： {result}, 概率是: {prediction.item()*100:.1f }%")
