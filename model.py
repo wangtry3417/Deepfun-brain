@@ -60,3 +60,4 @@ with torch.no_grad():
   elif prediction.item() == 0.5: result = "蛋糕做出來一般般"
   else: result = "蛋糕不好吃"
 print(f"結果是： {result}, 概率是: {prediction.item()*100 }%")
+torch.jit.script(model).save("model.pth")
