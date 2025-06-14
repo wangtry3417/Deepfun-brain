@@ -16,7 +16,7 @@ def create_payment():
         return redirect(wbank.session.authPage(url="/process/payment", intent="wbank**/wbank/card/action"))
     return "WBank Session Invaild"
     
-@app.route("/process")
+@app.route("/process/payment")
 @wbank.need_login
 def process_pm():
     username, pw, authCode = wbank.session.recvAll()
