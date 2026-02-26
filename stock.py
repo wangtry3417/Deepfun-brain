@@ -3,7 +3,7 @@
 """
 
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, List
 from dataclasses import dataclass
 import numpy as np
@@ -17,7 +17,7 @@ import random
 
 def check_market_status(market="HK"):
     """檢查市場是否開市"""
-    now = datetime.now()
+    now = datetime.now(tz=timezone(timedelta(hours=8)))
     hour = now.hour
     minute = now.minute
     weekday = now.weekday()
